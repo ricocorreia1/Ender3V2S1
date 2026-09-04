@@ -1,3 +1,25 @@
-.pio/
-_fonte_para_build.tgz
+# Este repositorio acompanha SO os arquivos que a traducao PT-BR toca.
+# Tudo o mais do firmware fica ignorado (nao aparece como alteracao).
+/*
+!/.gitignore
+!/platformio.ini
+!/traduzir_ptbr.py
+!/firmware_ptbr/
+!/Marlin/
+/Marlin/*
+!/Marlin/Configuration.h
+!/Marlin/Configuration_adv.h
+!/Marlin/Version.h
+!/Marlin/src/
+/Marlin/src/*
+!/Marlin/src/inc/
+/Marlin/src/inc/*
+!/Marlin/src/inc/Conditionals-2-LCD.h
+!/Marlin/src/lcd/
+/Marlin/src/lcd/*
+!/Marlin/src/lcd/dwin/
+!/Marlin/src/lcd/language/
+!/Marlin/src/lcd/menu/
+/Marlin/src/lcd/menu/*
+!/Marlin/src/lcd/menu/menu_prouiex.cpp
 *.tgz
