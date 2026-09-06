@@ -1,0 +1,21 @@
+FONTE COM ACENTOS - Ender 3 V2 (tela DWIN)
+==========================================
+A pasta DWIN_SET tem SO o arquivo de fontes. Gravar so' ele troca as letras
+da tela e NAO mexe nos icones/imagens que voce ja tem.
+
+COMO GRAVAR
+1. Cartao microSD de 8GB ou menos, FAT32, unidade de alocacao 4096 bytes
+2. Copie a pasta DWIN_SET (com o 0T5UIC1.HZK dentro) para a RAIZ do cartao
+3. Impressora desligada; tire a tela do suporte e ponha o cartao no slot
+   que fica ATRAS DA TELA (nao e' o slot da placa)
+4. Ligue: a tela fica azul enquanto grava e vira laranja quando termina
+5. Desligue, tire o cartao, remonte
+
+DEPOIS grave o firmware E3V2-PTBR-2.bin no cartao da PLACA (raiz, sozinho).
+A ordem nao importa, mas so' fica tudo certo com os DOIS gravados: a fonte
+sem o firmware novo mostra simbolos trocados (& ^ } " ; ') no lugar dos
+acentos, e o firmware novo sem a fonte mostra caracteres em branco.
+
+PARA VOLTAR ATRAS
+Use a pasta original_para_voltar: mesmo processo, com o 0T5UIC1.HZK
+original da Creality/mriscoc.
