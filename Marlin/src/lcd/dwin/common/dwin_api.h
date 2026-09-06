@@ -70,19 +70,102 @@ inline void dwinLong(size_t &i, const uint32_t lval) {
 // Send the data in the buffer plus the packet tail
 void dwinSend(size_t &i);
 
+/**
+ * PT-BR: letras acentuadas na tela DWIN.
+ *
+ * A tela nao entende UTF-8: ela desenha um byte = um caractere, buscando o
+ * bitmap numa tabela ASCII de 128 posicoes. As acentuadas foram desenhadas
+ * em CODIGOS LIVRES dessa tabela (arquivo de fontes 0T5UIC1.HZK, gerado por
+ * fonte_ptbr.py). Aqui esta a unica traducao necessaria: todo texto que vai
+ * para o display passa por dwinText, entao e' aqui que a sequencia UTF-8
+ * (0xC3 + byte) vira o codigo do glifo.
+ *
+ * O que nao tem glifo proprio cai para a letra sem acento — nunca lixo na
+ * tela, mesmo em nome de arquivo do cartao com acento estranho.
+ */
+// Textos que vem da parte fechada do ProUI (libproui.a) ja' traduzidos.
+// Definida em dwin_api.cpp; usada aqui na copia E na medida do texto, para
+// que a centralizacao use o tamanho da frase em portugues.
+const char* dwinPtbrTexto(const char * const s);
+
+inline char dwinGlifoLatino(const uint8_t b) {
+  switch (b) {
+    case 0xA3: return 28;      // a til
+    case 0xB5: return 29;      // o til
+    case 0xA7: return 30;      // c cedilha
+    case 0xA1: return 31;      // a agudo
+    case 0xA9: return 0x60;    // e agudo   (ocupa o lugar da crase)
+    case 0xAA: return 0x5E;    // e circunflexo (^)
+    case 0xAD: return 0x7D;    // i agudo   (})
+    case 0xB3: return 0x26;    // o agudo   (&)
+    case 0xA2: return 0x3B;    // a circunflexo (;)
+    case 0xBA: return 0x22;    // u agudo   (")
+    case 0xB4: return 0x27;    // o circunflexo (')
+    // sem glifo proprio: usa a letra sem acento
+    case 0xA0: case 0xA4: case 0xA5: case 0xA6: return 'a';
+    case 0xA8: case 0xAB: case 0xAC: return 'e';
+    case 0xAE: case 0xAF: return 'i';
+    case 0xB1: return 'n';
+    case 0xB2: case 0xB6: case 0xB8: return 'o';
+    case 0xB9: case 0xBB: case 0xBC: return 'u';
+    case 0xBD: return 'y';
+    case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: return 'A';
+    case 0x87: return 'C';
+    case 0x88: case 0x89: case 0x8A: case 0x8B: return 'E';
+    case 0x8C: case 0x8D: case 0x8E: case 0x8F: return 'I';
+    case 0x91: return 'N';
+    case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: return 'O';
+    case 0x99: case 0x9A: case 0x9B: case 0x9C: return 'U';
+    default:   return '?';
+  }
+}
+
+// Copia convertendo UTF-8 -> codigos da tela. Devolve quantos bytes gravou.
+inline size_t dwinCopiaTexto(uint8_t * const dst, const char *s0, const size_t cap, const uint16_t rlimit) {
+  const char *s = dwinPtbrTexto(s0);
+  size_t n = 0;
+  while (*s && n < cap && n < rlimit) {
+    const uint8_t c = (uint8_t)*s++;
+    const uint8_t nx = (uint8_t)*s;                 // proximo byte (0 se acabou)
+    const bool cont = (nx >= 0x80 && nx <= 0xBF);   // byte de continuacao UTF-8
+    if (c == 0xC3 && cont)      { dst[n++] = (uint8_t)dwinGlifoLatino(nx); s++; }
+    else if (c == 0xC2 && cont) s++;                // grau, nao-quebra etc: descarta
+    else if (c < 0x80)          dst[n++] = c;       // ASCII normal
+    // Nome de arquivo vem do cartao em Latin-1 (1 byte por acentuada, sem o
+    // 0xC3 na frente): 0xE7=c, 0xE3=a til... O byte menos 0x40 e' exatamente
+    // o que dwinGlifoLatino ja entende. Sem isto o acento do nome virava lixo.
+    else if (c >= 0xC0)         dst[n++] = (uint8_t)dwinGlifoLatino((uint8_t)(c - 0x40));
+    // 0x80-0xBF soltos: ignorados (evitam lixo na tela)
+  }
+  return n;
+}
+
+// Comprimento do texto EM CARACTERES DE TELA (para centralizar e avancar o
+// cursor): uma acentuada ocupa 2 bytes em UTF-8 mas 1 posicao no display.
+inline size_t dwinTextLen(const char *s0) {
+  const char *s = dwinPtbrTexto(s0);
+  size_t n = 0;
+  while (s && *s) {
+    const uint8_t c = (uint8_t)*s++;
+    const uint8_t nx = (uint8_t)*s;
+    const bool cont = (nx >= 0x80 && nx <= 0xBF);
+    if ((c == 0xC3 || c == 0xC2) && cont) { s++; if (c == 0xC3) n++; }
+    else if (c < 0x80) n++;
+    else if (c >= 0xC0) n++;    // acentuada Latin-1 do nome do arquivo: 1 posicao
+  }
+  return n;
+}
+inline size_t dwinTextLen(FSTR_P s) { return dwinTextLen(FTOP(s)); }
+
 inline void dwinText(size_t &i, const char * const string, uint16_t rlimit=0xFFFF) {
   if (!string) return;
-  const size_t len = _MIN(sizeof(dwinSendBuf) - i, _MIN(strlen(string), rlimit));
-  if (len == 0) return;
-  memcpy(&dwinSendBuf[i+1], string, len);
+  const size_t len = dwinCopiaTexto(&dwinSendBuf[i+1], string, sizeof(dwinSendBuf) - i, rlimit);
   i += len;
 }
 
 inline void dwinText(size_t &i, FSTR_P string, uint16_t rlimit=0xFFFF) {
   if (!string) return;
-  const size_t len = _MIN(sizeof(dwinSendBuf) - i, _MIN(rlimit, strlen_P(FTOP(string))));
-  if (len == 0) return;
-  memcpy_P(&dwinSendBuf[i+1], string, len);
+  const size_t len = dwinCopiaTexto(&dwinSendBuf[i+1], FTOP(string), sizeof(dwinSendBuf) - i, rlimit);
   i += len;
 }
 

@@ -115,7 +115,7 @@ void MeshViewer::drawViewer(const bool withsave/*=false*/, const bool redraw/*=t
   }
   else DWINUI::drawButton(BTN_Continue, 86, 305);
   char str_1[6], str_2[6] = "";
-  ui.status_printf(0, F("Mesh minZ: %s, maxZ: %s"),
+  ui.status_printf(0, F("Malha minZ: %s, maxZ: %s"),
     dtostrf(min, 1, 2, str_1),
     dtostrf(max, 1, 2, str_2)
   );
