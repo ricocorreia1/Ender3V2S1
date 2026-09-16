@@ -15,7 +15,7 @@
 #include "toolbar.h"
 #include "quickmenu.h"
 
-#define QM_MAX (TBMaxOpt + 1)     // Voltar + atalhos
+#define QM_MAX 20                 // Voltar + ate 19 atalhos (cobre todo TBItemA)
 
 static uint8_t qm_count;          // linhas em uso
 static uint8_t qm_sel;            // indice absoluto do selecionado
@@ -62,9 +62,12 @@ static void qm_click() {
 
 void gotoQuickMenu() {
   qm_count = 1; qm_sel = 0; qm_top = 0; qm_opt[0] = 0;
-  for (uint8_t i = 0; i < TBMaxOpt; ++i) {
-    TBGetItem(PRO_data.TBopt[i]);
-    if (TBItem->icon) qm_opt[qm_count++] = PRO_data.TBopt[i];
+  // Ricardo: mostra todos os itens disponiveis em TBItemA (nao so os 5 da
+  // barra do home). Assim o usuario tem acesso rapido a todas as acoes.
+  const uint8_t N = toolBar.OptCount();
+  for (uint8_t i = 1; i < N && qm_count < QM_MAX; ++i) {
+    TBGetItem(i);
+    if (TBItem->icon) qm_opt[qm_count++] = i;
   }
   gotoPopup(qm_draw, qm_click, qm_change);
 }
