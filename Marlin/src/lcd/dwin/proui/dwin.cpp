@@ -109,6 +109,9 @@
 #if HAS_TOOLBAR
   #include "toolbar.h"
 #endif
+#if HAS_TOOLBAR
+  #include "quickmenu.h"
+#endif
 
 #if HAS_ESDIAG
   #include "endstop_diag.h"
@@ -120,6 +123,9 @@
 
 #if ANY(HAS_MESH, HAS_TRAMMING_WIZARD)
   #include "meshviewer.h"
+#endif
+#if ENABLED(MESH_BED_LEVELING)
+  #include "meshedit.h"
 #endif
 
 #if HAS_LOCKSCREEN
@@ -1149,9 +1155,37 @@ void eachMomentUpdate() {
 #endif // POWER_LOSS_RECOVERY
 
 void dwinHandleScreen() {
+  #if HAS_TOOLBAR
+    if (encoderLongPress) { encoderLongPress = false; quickMenuLongPress(); }   // menu rapido "Atalhos"
+  #else
+    encoderLongPress = false;
+  #endif
   switch (checkkey) {
     case ID_MainMenu:        hmiMainMenu(); break;
-    case ID_Menu:            hmiMenu(); break;
+    case ID_Menu:
+      #if HAS_TOOLBAR
+        if (currentMenu == &toolBar) {
+          // Ricardo: intercepta hmiMenu para forcar redesenho manual da barra
+          // (a Menu::draw da lib limita a TROWS=6 itens; ao trocar de selecao
+          // ela nao redesenha o 7o+, entao o realce/legenda nao aparecem).
+          const int8_t prev_sel = toolBar.selected;
+          hmiMenu();
+          if (toolBar.selected != prev_sel) {
+            drawToolBar();
+            // Ricardo: hmiMenu pode ter desenhado um scroll marker em cima do
+            // titulo — redesenhamos o titulo para restaurar "Menu Principal".
+            #if ENABLED(CV_LASER_MODULE)
+              title.draw(laser_device.is_laser_device() ? GET_TEXT_F(MSG_LASER_ENGRAVING) : GET_TEXT_F(MSG_3D_PRINTER));
+            #else
+              title.draw(GET_TEXT_F(MSG_MAIN_MENU));
+            #endif
+          }
+        }
+        else hmiMenu();
+      #else
+        hmiMenu();
+      #endif
+      break;
     case ID_SetInt:          hmiSetDraw(); break;
     case ID_SetFloat:        hmiSetDraw(); break;
     case ID_SetPInt:         hmiSetPInt(); break;
@@ -2975,6 +3009,7 @@ void drawMotionMenu() {
       mMeshMoveZItem = EDIT_ITEM(ICON_Zoffset, MSG_MOVE_Z, onDrawPFloat2Menu, setMMeshMoveZ, &current_position.z);
       MENU_ITEM(ICON_Axis, MSG_UBL_CONTINUE_MESH, onDrawMenuItem, manualMeshContinue);
       MENU_ITEM(ICON_MeshViewer, MSG_MESH_VIEW, onDrawSubMenu, dwinMeshViewer);
+      MENU_ITEM_F(ICON_MeshEdit, "Editar malha", onDrawSubMenu, gotoMeshEdit);
       MENU_ITEM(ICON_MeshSave, MSG_UBL_SAVE_MESH, onDrawMenuItem, manualMeshSave);
     }
     SET_MENU(manualMesh, MSG_UBL_MANUAL_MESH);
@@ -3185,24 +3220,24 @@ void drawMaxAccelMenu() {
       if (notCurrentMenu(selectColorMenu)) {
         BACK_ITEM(drawAdvancedSettingsMenu);
         MENU_ITEM(ICON_StockConfiguration, MSG_RESTORE_DEFAULTS, onDrawMenuItem, restoreDefaultColors);
-        EDIT_ITEM_F(0, "Screen Background", onDrawSelColorItem, selColor, &hmiData.colorBackground);
+        EDIT_ITEM_F(0, "Fundo da tela", onDrawSelColorItem, selColor, &hmiData.colorBackground);
         EDIT_ITEM_F(0, "Cursor", onDrawSelColorItem, selColor, &hmiData.colorCursor);
-        EDIT_ITEM_F(0, "Title Background", onDrawSelColorItem, selColor, &hmiData.colorTitleBg);
-        EDIT_ITEM_F(0, "Title Text", onDrawSelColorItem, selColor, &hmiData.colorTitleTxt);
-        EDIT_ITEM_F(0, "Text", onDrawSelColorItem, selColor, &hmiData.colorText);
-        EDIT_ITEM_F(0, "Selected", onDrawSelColorItem, selColor, &hmiData.colorSelected);
-        EDIT_ITEM_F(0, "Split Line", onDrawSelColorItem, selColor, &hmiData.colorSplitLine);
-        EDIT_ITEM_F(0, "Highlight", onDrawSelColorItem, selColor, &hmiData.colorHighlight);
-        EDIT_ITEM_F(0, "Status Background", onDrawSelColorItem, selColor, &hmiData.colorStatusBg);
-        EDIT_ITEM_F(0, "Status Text", onDrawSelColorItem, selColor, &hmiData.colorStatusTxt);
-        EDIT_ITEM_F(0, "Popup Background", onDrawSelColorItem, selColor, &hmiData.colorPopupBg);
-        EDIT_ITEM_F(0, "Popup Text", onDrawSelColorItem, selColor, &hmiData.colorPopupTxt);
-        EDIT_ITEM_F(0, "Alert Background", onDrawSelColorItem, selColor, &hmiData.colorAlertBg);
-        EDIT_ITEM_F(0, "Alert Text", onDrawSelColorItem, selColor, &hmiData.colorAlertTxt);
-        EDIT_ITEM_F(0, "Percent Text", onDrawSelColorItem, selColor, &hmiData.colorPercentTxt);
-        EDIT_ITEM_F(0, "Bar Fill", onDrawSelColorItem, selColor, &hmiData.colorBarfill);
-        EDIT_ITEM_F(0, "Indicator value", onDrawSelColorItem, selColor, &hmiData.colorIndicator);
-        EDIT_ITEM_F(0, "Coordinate value", onDrawSelColorItem, selColor, &hmiData.colorCoordinate);
+        EDIT_ITEM_F(0, "Fundo do titulo", onDrawSelColorItem, selColor, &hmiData.colorTitleBg);
+        EDIT_ITEM_F(0, "Texto do titulo", onDrawSelColorItem, selColor, &hmiData.colorTitleTxt);
+        EDIT_ITEM_F(0, "Texto", onDrawSelColorItem, selColor, &hmiData.colorText);
+        EDIT_ITEM_F(0, "Selecionado", onDrawSelColorItem, selColor, &hmiData.colorSelected);
+        EDIT_ITEM_F(0, "Linha divisoria", onDrawSelColorItem, selColor, &hmiData.colorSplitLine);
+        EDIT_ITEM_F(0, "Destaque", onDrawSelColorItem, selColor, &hmiData.colorHighlight);
+        EDIT_ITEM_F(0, "Fundo do status", onDrawSelColorItem, selColor, &hmiData.colorStatusBg);
+        EDIT_ITEM_F(0, "Texto do status", onDrawSelColorItem, selColor, &hmiData.colorStatusTxt);
+        EDIT_ITEM_F(0, "Fundo do popup", onDrawSelColorItem, selColor, &hmiData.colorPopupBg);
+        EDIT_ITEM_F(0, "Texto do popup", onDrawSelColorItem, selColor, &hmiData.colorPopupTxt);
+        EDIT_ITEM_F(0, "Fundo do alerta", onDrawSelColorItem, selColor, &hmiData.colorAlertBg);
+        EDIT_ITEM_F(0, "Texto do alerta", onDrawSelColorItem, selColor, &hmiData.colorAlertTxt);
+        EDIT_ITEM_F(0, "Texto porcentagem", onDrawSelColorItem, selColor, &hmiData.colorPercentTxt);
+        EDIT_ITEM_F(0, "Barra de progresso", onDrawSelColorItem, selColor, &hmiData.colorBarfill);
+        EDIT_ITEM_F(0, "Valor indicador", onDrawSelColorItem, selColor, &hmiData.colorIndicator);
+        EDIT_ITEM_F(0, "Valor coordenada", onDrawSelColorItem, selColor, &hmiData.colorCoordinate);
       }
       SET_MENU(selectColorMenu, MSG_COLORS_SELECT);
     }
@@ -3582,6 +3617,9 @@ void drawMaxAccelMenu() {
         MENU_ITEM(ICON_MeshEdit, MSG_EDIT_MESH, onDrawSubMenu, drawEditMeshMenu);
       #endif
       MENU_ITEM(ICON_MeshViewer, MSG_MESH_VIEW, onDrawSubMenu, dwinMeshViewer);
+      #if ENABLED(MESH_BED_LEVELING)
+        MENU_ITEM_F(ICON_MeshEdit, "Editar malha", onDrawSubMenu, gotoMeshEdit);
+      #endif
     }
     SET_MENU(meshMenu, MSG_MESH_LEVELING);
   }
@@ -3656,7 +3694,7 @@ void drawMaxAccelMenu() {
   void laserRunRange() {
     if (!laser_device.is_laser_device()) return;
     if (!all_axes_trusted()) return LCD_MESSAGE(MSG_LASER_FIRST_HOME);
-    dwinShowPopup(ICON_TempTooHigh, "LASER", "Run Range", BTN_Cancel);
+    dwinShowPopup(ICON_TempTooHigh, "LASER", "Percorrer area", BTN_Cancel);
     hmiSaveProcessID(ID_WaitResponse);
     laser_device.laser_range();
   }
@@ -3710,13 +3748,13 @@ void drawMaxAccelMenu() {
     select_page.set(PAGE_ADVANCE);
     iconAdvSettings();
     checkkey = ID_MainMenu;
-    toolBar.draw();
+    drawToolBar();     // desenha todos os icones (manual, ate 10)
     dwinUpdateLCD();
   }
 
   void gotoToolBar() {
     checkkey = ID_Menu;
-    toolBar.draw();
+    drawToolBar();     // desenha todos os icones (manual, ate 10)
   }
 
 #endif  // HAS_TOOLBAR

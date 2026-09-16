@@ -23,9 +23,12 @@
 
 #if ALL(DWIN_LCD_PROUI, HAS_TOOLBAR)
 
+#include "../../marlinui.h"
 #include "dwin.h"
 #include "toolbar.h"
 #include "toolbar_def.h"
+// os indices 13/14/15/16 do DEF_TBOPT (Aquecer bico / Aquecer mesa / Limpar bico / Preparar calibracao) dependem desta contagem
+static_assert(COUNT(TBItemA) == 17, "TBItemA mudou de tamanho: ajuste DEF_TBOPT em proui_ex.h");
 #include "menus.h"
 
 const TBItem_t *TBItem;
@@ -36,14 +39,22 @@ uint8_t ToolBar::OptCount() {
 }
 
 void onDrawTBItem(int8_t pos, int8_t line) {
+  UNUSED(line);   // usamos pos: posicao horizontal fixa, ignora scroll (topline)
   const bool focused = (checkkey == ID_Menu);
   const int8_t sel = toolBar.selected;
-  const uint8_t tw = focused ? MENU_CHR_W * TBMaxCaptionWidth : 0;
-  const uint8_t xoff = (DWIN_WIDTH - (B_XPOS * toolBar.count + tw)) / 2;
-  const uint8_t xp = xoff + line * B_XPOS + (line > sel ? tw : 0);
-  if (focused && (line == sel)) {
+  // Ricardo: layout compacto (sem shift horizontal); a legenda do selecionado
+  // eh desenhada na area de status (embaixo dos icones). Isso deixa a barra
+  // comportar ate 10 icones sem cortar o texto.
+  const uint16_t iconsW = uint16_t(B_XPOS) * toolBar.count;
+  const uint8_t xoff = (iconsW < DWIN_WIDTH) ? (DWIN_WIDTH - iconsW) / 2 : 0;
+  const uint8_t xp = xoff + pos * B_XPOS;
+  dwinDrawBox(1, hmiData.colorBackground, xp - 2, TBYPOS, B_XPOS, TBHEIGHT);
+  if (focused && (pos == sel)) {
     dwinDrawBox(1, COLOR_BG_WINDOW, xp - 2, TBYPOS, B_XPOS, TBHEIGHT);
-    DWINUI::drawString(xp + B_XPOS, B_YPOS + 1, getMenuItem(pos)->caption);
+    // Ricardo: setar como mensagem de status faz o desenho periodico do LCD
+    // exibir a legenda (ela persiste ate expirar ou ser substituida — antes,
+    // desenhando direto em STATUS_Y, o refresh imediato apagava a legenda).
+    ui.set_status(getMenuItem(pos)->caption);
   }
   DWINUI::drawIcon(getMenuItem(pos)->icon, xp, B_YPOS);
 };
@@ -58,7 +69,16 @@ void drawToolBar() {
     toolBar.count = menuItemCount;
     currentMenu = &toolBar;
   }
-  toolBar.draw();
+  // Ricardo: forca topline=0. Como count pode ser > TROWS, a lib base entende
+  // que o "menu" esta rolavel e pode desenhar UI de scroll (faixa preta no topo).
+  // Zerando a topline mantemos a lib no estado "sem scroll".
+  toolBar.topline = 0;
+  // Ricardo: NAO chamamos toolBar.draw() aqui — a Menu::draw() da lib limita
+  // o desenho a TROWS=6 linhas, o que deixaria de fora atalhos alem do 6o.
+  // Desenhamos todos os icones manualmente. A parte de click/scroll continua
+  // funcionando porque currentMenu = &toolBar.
+  dwinDrawRectangle(1, hmiData.colorBackground, 0, TBYPOS, DWIN_WIDTH, TBYPOS + TBHEIGHT);
+  for (uint8_t i = 0; i < toolBar.count; ++i) onDrawTBItem(i, i);
 }
 
 void updateTBSetupItem(int8_t pos, uint8_t val) {

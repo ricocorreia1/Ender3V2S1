@@ -51,7 +51,7 @@ void dwinPopupContinue(const uint8_t icon, FSTR_P const fmsg1, FSTR_P const fmsg
 }
 
 void dwinPopupConfirmCancel(const uint8_t icon, FSTR_P const fmsg2) {
-  dwinDrawPopup(icon, F("Please confirm"), fmsg2);
+  dwinDrawPopup(icon, F("Confirme, por favor"), fmsg2);
   DWINUI::drawButton(BTN_Confirm, 26, 280);
   DWINUI::drawButton(BTN_Cancel, 146, 280);
   drawSelectHighlight(hmiFlag.select_flag);

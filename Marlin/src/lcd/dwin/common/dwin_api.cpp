@@ -272,6 +272,52 @@ void dwinFrameAreaMove(uint8_t mode, uint8_t dir, uint16_t dis,
 //  x/y: Upper-left coordinate of the string
 //  *string: The string
 //  rlimit: To limit the drawn string length
+/**
+ * PT-BR: a parte fechada do ProUI (biblioteca libproui.a, do "ProUI EX") tem
+ * os textos em ingles COMPILADOS dentro dela — nao passam pelo arquivo de
+ * idioma, por isso a tela de impressao continuava em ingles. Como toda ela
+ * desenha texto chamando dwinDrawString, traduzimos aqui, na porta de saida.
+ * So' vale para textos identicos aos da biblioteca; qualquer outro passa
+ * intacto.
+ */
+const char* dwinPtbrTexto(const char * const s) {
+  if (!s || !s[0]) return s;
+  struct Par { const char *en, *pt; };
+  static const Par tabela[] = {
+    // tela de impressao
+    { "Tune",        "Ajustar"    }, { "Pause",       "Pausar"      },
+    { "Stop",        "Parar"      }, { "Resume",      "Retomar"     },
+    { "Print Time",  "Decorrido"  }, { "Remaining",   "Restante"    },
+    { "Print Done",  "Impressão concluída" },
+    { "Pause Print", "Pausar impressão"    },
+    { "Stop Print",  "Parar impressão"     },
+    // menus e avisos vindos da biblioteca
+    { "Park Head",              "Estacionar bico"        },
+    { "Motion",                 "Movimento"              },
+    { "Mesh Viewer",            "Visualizador de malha"  },
+    { "Z Offset",               "Deslocamento Z"         },
+    { "Bed size",               "Tamanho da mesa"        },
+    { "Physical maximums",      "Máximos físicos"        },
+    { "Physical minimums",      "Mínimos físicos"        },
+    { "Invert Extruder",        "Inverter extrusor"      },
+    { "No inverted",            "Não invertido"          },
+    { "Max Extruder temperature", "Temp. máx do extrusor" },
+    { "Filament runout sensor", "Sensor de filamento"    },
+    { "Toolbar configuration",  "Barra de ferramentas"   },
+    { "Thumbnail not found",    "Sem prévia no arquivo"  },
+    { "Thumbnail is not JPEG",  "Prévia não é JPEG"      },
+    { "Invalid Thumbnail Size", "Tamanho de prévia inválido" },
+    { "Layer height:",          "Altura da camada:"      },
+    { "Filament used:",         "Filamento usado:"       },
+    { "Author: ",               "Autor: "                },
+    { "HIGH",                   "ALTA"                   },
+    { "LOW",                    "BAIXA"                  },
+  };
+  for (uint8_t i = 0; i < COUNT(tabela); ++i)
+    if (strcmp(s, tabela[i].en) == 0) return tabela[i].pt;
+  return s;
+}
+
 void dwinDrawString(bool bShow, uint8_t size, uint16_t color, uint16_t bColor, uint16_t x, uint16_t y, const char * const string, uint16_t rlimit/*=0xFFFF*/) {
   #if ENABLED(DWIN_CREALITY_LCD)
     dwinDrawRectangle(1, bColor, x, y, x + (fontWidth(size) * strlen_P(string)), y + fontHeight(size));

@@ -127,7 +127,7 @@ void DWINUI::moveBy(xy_int_t point) {
 
 // Draw a Centered string using arbitrary x1 and x2 margins
 void DWINUI::drawCenteredString(bool bShow, fontid_t fid, uint16_t color, uint16_t bColor, uint16_t x1, uint16_t x2, uint16_t y, const char * const string) {
-  const uint16_t x = _MAX(0U, x2 + x1 - strlen_P(string) * fontWidth(fid)) / 2 - 1;
+  const uint16_t x = _MAX(0U, x2 + x1 - dwinTextLen(string) * fontWidth(fid)) / 2 - 1;
   dwinDrawString(bShow, fid, color, bColor, x, y, string);
 }
 
@@ -153,11 +153,11 @@ void DWINUI::drawChar(uint16_t color, const char c) {
 //  rlimit: For draw less chars than string length use rlimit
 void DWINUI::drawString(const char * const string, uint16_t rlimit) {
   dwinDrawString(false, fontID, textColor, backColor, cursor.x, cursor.y, string, rlimit);
-  moveBy(strlen(string) * fontWidth(fontID), 0);
+  moveBy(dwinTextLen(string) * fontWidth(fontID), 0);
 }
 void DWINUI::drawString(uint16_t color, const char * const string, uint16_t rlimit) {
   dwinDrawString(false, fontID, color, backColor, cursor.x, cursor.y, string, rlimit);
-  moveBy(strlen(string) * fontWidth(fontID), 0);
+  moveBy(dwinTextLen(string) * fontWidth(fontID), 0);
 }
 
 // Draw a numeric integer value
@@ -212,7 +212,7 @@ void DWINUI::iconShow(bool BG, uint8_t icon, uint16_t x, uint16_t y) {
 void DWINUI::iconButton(const bool selected, const uint16_t highlight, const int iconid, const frame_rect_t &ico, FSTR_P caption) {
   drawIconWB(iconid + selected, ico.x, ico.y);
   if (selected) drawBox(0, highlight, ico);
-  const uint16_t x = ico.x + (ico.w - strlen_P(FTOP(caption)) * fontWidth()) / 2,
+  const uint16_t x = ico.x + (ico.w - dwinTextLen(FTOP(caption)) * fontWidth()) / 2,
                  y = (ico.y + ico.h - 20) - fontHeight() / 2;
   drawString(x, y, caption);
 }

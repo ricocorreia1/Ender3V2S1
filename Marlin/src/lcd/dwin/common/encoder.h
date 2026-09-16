@@ -46,6 +46,8 @@ typedef enum {
 } EncoderState;
 
 #define ENCODER_WAIT_MS 20
+#define ENCODER_LONG_MS 700   // ms segurando o botao para valer como pressao longa
+extern bool encoderLongPress;   // pressao longa pendente (consumida em dwinHandleScreen)
 
 // Analyze encoder value and return state
 EncoderState encoderReceiveAnalyze();

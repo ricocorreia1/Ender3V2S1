@@ -25,8 +25,12 @@
 
 #include "dwin.h"
 #include "toolbar.h"
+#include "tbheat.h"
+#include "tbclean.h"
+#include "tbcalib.h"
 
 #define TB_ITEM(I,L,V...) {I, GET_TEXT_F(L), V}
+#define TB_ITEM_F(I,L,V...) {I, F(L), V}
 
 const TBItem_t TBItemA[] = {
   TB_ITEM(0, MSG_OPTION_DISABLED, nullptr),
@@ -51,5 +55,20 @@ const TBItem_t TBItemA[] = {
   #endif
   TB_ITEM(ICON_Reboot, MSG_RESET_PRINTER, rebootPrinter),
   TB_ITEM(ICON_WriteEEPROM, MSG_STORE_EEPROM, writeEeprom),
-  TB_ITEM(ICON_Park, MSG_FILAMENT_PARK_ENABLED, parkHead)
+  TB_ITEM(ICON_Park, MSG_FILAMENT_PARK_ENABLED, parkHead),
+  // --- acrescimos (Ricardo): aquecer so o bico / so a mesa, com popup de temperatura ---
+  #if HAS_HOTEND
+    TB_ITEM_F(ICON_SetEndTemp, "Aquecer bico", tbHeatHotend),
+  #endif
+  #if HAS_HEATED_BED
+    TB_ITEM_F(ICON_SetBedTemp, "Aquecer mesa", tbHeatBed),
+  #endif
+  // --- acrescimo (Ricardo): rotina rapida de limpeza do bico ---
+  #if HAS_HOTEND
+    TB_ITEM_F(ICON_HotendTemp, "Limpar bico", tbCleanNozzle),
+  #endif
+  // --- acrescimo (Ricardo): preparar temperaturas para calibrar malha manual ---
+  #if HAS_HOTEND && HAS_HEATED_BED
+    TB_ITEM_F(ICON_ManualMesh, "Preparar calibracao", tbPrepareCalib),
+  #endif
 };

@@ -43,6 +43,7 @@
 #include <stdlib.h>
 
 EncoderRate encoderRate;
+bool encoderLongPress = false;
 
 // TODO: Replace with ui.quick_feedback
 void Encoder_tick() {
@@ -61,24 +62,41 @@ EncoderState encoderReceiveAnalyze() {
   static int8_t temp_diff = 0; // Cleared on each full step, as configured
 
   EncoderState temp_diffState = ENCODER_DIFF_NO;
+
+  // ---- Botao: clique ao SOLTAR; segurar >= ENCODER_LONG_MS = pressao longa (Ricardo) ----
+  // Antes: cada 300 ms pressionado gerava um novo clique (rajada de bips).
+  static bool     enc_pressed   = false;   // estado visto na ultima leitura
+  static bool     enc_long_done = false;   // pressao longa ja disparada nesta apertada
+  static millis_t enc_press_ms  = 0;       // instante em que apertou
+  static millis_t enc_seen_ms   = 0;       // ultima vez que vimos o botao apertado
+  static millis_t enc_release_ms = 0;      // instante em que soltou (debounce)
   if (BUTTON_PRESSED(ENC)) {
-    static millis_t next_click_update_ms;
-    if (ELAPSED(now, next_click_update_ms)) {
-      next_click_update_ms = millis() + 300;
-      Encoder_tick();
-      #if PIN_EXISTS(LCD_LED)
-        //LED_Action();
-      #endif
-      TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
-      if (!ui.backlight) {
-        ui.refresh_brightness();
-        return ENCODER_DIFF_NO;
-      }
-      const bool was_waiting = marlin.wait_for_user;
-      marlin.user_resume();
-      return was_waiting ? ENCODER_DIFF_NO : ENCODER_DIFF_ENTER;
+    if (!enc_pressed) {
+      if (PENDING(now, enc_release_ms + 60)) return ENCODER_DIFF_NO;   // rebote logo apos soltar
+      enc_pressed = true; enc_long_done = false; enc_press_ms = now;
     }
-    else return ENCODER_DIFF_NO;
+    enc_seen_ms = now;
+    if (!enc_long_done && ELAPSED(now, enc_press_ms + ENCODER_LONG_MS)) {
+      enc_long_done = true;
+      Encoder_tick();
+      TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
+      if (!ui.backlight) { ui.refresh_brightness(); return ENCODER_DIFF_NO; }
+      encoderLongPress = true;               // consumido em dwinHandleScreen()
+    }
+    return ENCODER_DIFF_NO;
+  }
+  else if (enc_pressed) {                    // acabou de soltar
+    enc_pressed = false;
+    enc_release_ms = now;
+    if (enc_long_done) return ENCODER_DIFF_NO;                  // ja tratado como pressao longa
+    if (PENDING(now, enc_press_ms + 25)) return ENCODER_DIFF_NO; // rebote ao apertar
+    if (ELAPSED(now, enc_seen_ms + 150)) return ENCODER_DIFF_NO; // ficamos sem ler (ex.: homing): descarta
+    Encoder_tick();
+    TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
+    if (!ui.backlight) { ui.refresh_brightness(); return ENCODER_DIFF_NO; }
+    const bool was_waiting = marlin.wait_for_user;
+    marlin.user_resume();
+    return was_waiting ? ENCODER_DIFF_NO : ENCODER_DIFF_ENTER;
   }
 
   temp_diff += ui.get_encoder_delta();
