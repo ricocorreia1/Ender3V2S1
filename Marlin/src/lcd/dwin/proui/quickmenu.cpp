@@ -62,12 +62,20 @@ static void qm_click() {
 
 void gotoQuickMenu() {
   qm_count = 1; qm_sel = 0; qm_top = 0; qm_opt[0] = 0;
-  // Ricardo: mostra todos os itens disponiveis em TBItemA (nao so os 5 da
-  // barra do home). Assim o usuario tem acesso rapido a todas as acoes.
+  // Ricardo: mostra todos os itens de TBItemA. "Ir para tela inicial"
+  // (onClick == gotoMainMenu) e promovido para o primeiro slot depois do
+  // Voltar — atalho mais usado, sempre no topo.
   const uint8_t N = toolBar.OptCount();
+  for (uint8_t i = 1; i < N; ++i) {
+    TBGetItem(i);
+    if (TBItem->icon && TBItem->onClick == gotoMainMenu) {
+      qm_opt[qm_count++] = i;
+      break;
+    }
+  }
   for (uint8_t i = 1; i < N && qm_count < QM_MAX; ++i) {
     TBGetItem(i);
-    if (TBItem->icon) qm_opt[qm_count++] = i;
+    if (TBItem->icon && TBItem->onClick != gotoMainMenu) qm_opt[qm_count++] = i;
   }
   gotoPopup(qm_draw, qm_click, qm_change);
 }

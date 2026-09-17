@@ -71,4 +71,6 @@ const TBItem_t TBItemA[] = {
   #if HAS_HOTEND && HAS_HEATED_BED
     TB_ITEM_F(ICON_ManualMesh, "Preparar calibracao", tbPrepareCalib),
   #endif
+  // --- acrescimo (Ricardo): voltar rapido para a tela inicial ---
+  TB_ITEM_F(ICON_Back, "Ir para tela inicial", gotoMainMenu),
 };

@@ -90,10 +90,15 @@ static void me_drawPoint(const uint8_t x, const uint8_t y, const float z, const 
 // Moldura do cursor em volta de um ponto (on = desenha, off = apaga)
 static void me_drawPointFrame(const uint8_t x, const uint8_t y, const bool on) {
   const uint16_t cx = me_px(x), cy = me_py(y), d = me_rmax + 3;
-  const uint16_t c = on ? (me_editing ? hmiData.colorHighlight : hmiData.colorText) : hmiData.colorBackground;
+  // Ricardo: em edicao usa AMARELO SOLIDO — deixa obvio que girar altera o Z.
+  // Fora de edicao, moldura branca discreta indica so posicao do cursor.
+  const uint16_t c = on ? (me_editing ? COLOR_YELLOW : hmiData.colorText) : hmiData.colorBackground;
   dwinDrawRectangle(0, c, cx - d, cy - d, cx + d, cy + d);
   dwinDrawRectangle(0, c, cx - d - 1, cy - d - 1, cx + d + 1, cy + d + 1);
-  if (!on) me_drawGridAt(x, y, d + 1);   // recompoe as linhas que a moldura cobria
+  // Em edicao, terceira linha externa reforca o alerta visual
+  if (on && me_editing)
+    dwinDrawRectangle(0, c, cx - d - 2, cy - d - 2, cx + d + 2, cy + d + 2);
+  if (!on) me_drawGridAt(x, y, d + 2);   // recompoe as linhas que a moldura cobria
 }
 
 // Moldura dos botoes (0 = Salvar, 1 = Sair)
@@ -112,7 +117,7 @@ static void me_drawCursor(const bool on) {
 
 static void me_status() {
   if (me_editing)
-    ui.status_printf(0, F("Z=%s  gire ajusta, clique grava"), dtostrf(me_z, 1, 2, me_buf));
+    ui.status_printf(0, F("* EDITANDO * Z=%s  gire ajusta, clique grava"), dtostrf(me_z, 1, 2, me_buf));
   else if (me_cur < ME_NPTS)
     ui.status_printf(0, F("Ponto %i,%i  Z=%s  clique edita"), int(me_cx()), int(me_cy()), dtostrf(bedlevel.z_values[me_cx()][me_cy()], 1, 2, me_buf));
   else if (me_cur == ME_SAVE)

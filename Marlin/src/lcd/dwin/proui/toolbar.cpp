@@ -27,8 +27,8 @@
 #include "dwin.h"
 #include "toolbar.h"
 #include "toolbar_def.h"
-// os indices 13/14/15/16 do DEF_TBOPT (Aquecer bico / Aquecer mesa / Limpar bico / Preparar calibracao) dependem desta contagem
-static_assert(COUNT(TBItemA) == 17, "TBItemA mudou de tamanho: ajuste DEF_TBOPT em proui_ex.h");
+// os indices 13/14/15/16/17 do DEF_TBOPT (Aquecer bico / Aquecer mesa / Limpar bico / Preparar calibracao / Ir para tela inicial) dependem desta contagem
+static_assert(COUNT(TBItemA) == 18, "TBItemA mudou de tamanho: ajuste DEF_TBOPT em proui_ex.h");
 #include "menus.h"
 
 const TBItem_t *TBItem;
