@@ -15,4 +15,8 @@
 
 #if ALL(DWIN_LCD_PROUI, MESH_BED_LEVELING)
   void gotoMeshEdit();
+  // Chamado no long-press quando o editor de malha esta aberto.
+  // Abre um sub-popup para "auto-preencher" o ponto atual usando os vizinhos
+  // (esquerda / baixo) + um offset parametrizavel. Devolve true se tratou.
+  bool meshEditLongPress();
 #endif

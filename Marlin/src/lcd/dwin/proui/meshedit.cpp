@@ -213,8 +213,12 @@ static void me_onClick() {
       bedlevel.z_values[x][y] = me_z;             // grava so este ponto
       me_editing = false;
       me_drawPoint(x, y, me_z);
-      me_drawPointFrame(x, y, true);
-      LCD_MESSAGE_F("Ponto gravado. Salvar = guarda na EEPROM");
+      me_drawPointFrame(x, y, false);             // apaga a moldura amarela
+      // Ricardo: apos gravar, avanca automaticamente para o proximo ponto
+      // (facilita calibrar linha por linha sem ter que girar depois do click).
+      if (me_cur + 1 < ME_NPTS) me_cur++;
+      me_drawCursor(true);
+      LCD_MESSAGE_F("Gravado. Girando vai para o proximo, clique edita");
     }
     dwinUpdateLCD();
   }
@@ -239,6 +243,138 @@ void gotoMeshEdit() {
   set_bed_leveling_enabled(false);                // Z "cru" enquanto editamos
   gcode.process_subcommands_now(F("M211 S0"));    // permite Z negativo, como no nivelamento manual
   gotoPopup(me_drawAll, me_onClick, me_onChange);
+}
+
+// ---- Sub-popup: auto-preencher ponto atual --------------------------------
+// Regra da base:
+//   y == 0                : base = vizinho esquerda           (canto (0,0) => sem base)
+//   y >  0 && x == 0      : base = vizinho de baixo
+//   y >  0 && x >  0      : base = media(esquerda, baixo)
+// Valor final gravado: base + offset. O offset e' lembrado enquanto a
+// impressora estiver ligada (nao persiste em EEPROM).
+
+enum : uint8_t { AF_ROW_BASE = 0, AF_ROW_OFF = 1, AF_ROW_GO = 2, AF_ROW_EXIT = 3, AF_N_ROWS = 4 };
+
+static float   af_offset = 0.10f;   // lembrado entre chamadas
+static float   af_base;             // calculado ao entrar
+static bool    af_hasBase;
+static uint8_t af_row;
+static bool    af_edit;
+static char    af_buf[8];
+
+static void af_calcBase() {
+  const uint8_t x = me_cx(), y = me_cy();
+  af_hasBase = true;
+  if (y == 0) {
+    if (x == 0) { af_hasBase = false; af_base = 0; return; }
+    af_base = bedlevel.z_values[x - 1][y];
+  }
+  else if (x == 0) {
+    af_base = bedlevel.z_values[x][y - 1];
+  }
+  else {
+    af_base = 0.5f * (bedlevel.z_values[x - 1][y] + bedlevel.z_values[x][y - 1]);
+  }
+  if (isnan(af_base)) { af_hasBase = false; af_base = 0; }
+}
+
+static void af_drawRow(uint8_t row) {
+  const uint16_t y = 115 + row * 40;
+  const bool selected = (row == af_row);
+  const bool canGo = af_hasBase;
+  const uint16_t bg = selected ? (af_edit ? COLOR_SELECT : COLOR_BG_BLUE)
+                               : hmiData.colorPopupBg;
+  dwinDrawRectangle(1, bg, 15, y, 257, y + 34);
+  char s[24];
+  if (row == AF_ROW_BASE) {
+    if (canGo) sprintf_P(s, PSTR("Base:  %s mm"), dtostrf(af_base, 1, 2, af_buf));
+    else       strcpy_P(s, PSTR("  sem base  "));
+    DWINUI::drawCenteredString(true, font12x24, hmiData.colorPopupTxt, bg, 14, 258, y + 6, s);
+  }
+  else if (row == AF_ROW_OFF) {
+    sprintf_P(s, PSTR("Offset: %s"), dtostrf(af_offset, 1, 2, af_buf));
+    DWINUI::drawCenteredString(true, font12x24, hmiData.colorPopupTxt, bg, 14, 258, y + 6, s);
+  }
+  else {
+    const char *label = (row == AF_ROW_GO) ? (canGo ? "Aplicar" : "(sem base)") : "Sair";
+    DWINUI::drawCenteredString(true, font12x24, hmiData.colorPopupTxt, bg, 14, 258, y + 6, label);
+  }
+}
+
+static void af_drawAll() {
+  DWINUI::clearMainArea();
+  drawPopupBkgd();
+  char title[28];
+  sprintf_P(title, PSTR("Auto-preencher (%i,%i)"), int(me_cx()), int(me_cy()));
+  DWINUI::drawCenteredString(font12x24, hmiData.colorPopupTxt, 75, title);
+  for (uint8_t i = 0; i < AF_N_ROWS; ++i) af_drawRow(i);
+  DWINUI::drawCenteredString(false, font8x16, hmiData.colorPopupTxt, hmiData.colorPopupBg,
+                             14, 258, 305, "gire=navegar  clique=OK");
+  dwinUpdateLCD();
+}
+
+static void af_change(const bool ccw) {
+  if (af_edit && af_row == AF_ROW_OFF) {
+    af_offset += ccw ? -0.01f : 0.01f;
+    LIMIT(af_offset, -ME_ZLIM, ME_ZLIM);
+    af_drawRow(AF_ROW_OFF);
+    dwinUpdateLCD();
+    return;
+  }
+  const uint8_t old = af_row;
+  if (ccw) af_row = af_row ? af_row - 1 : AF_N_ROWS - 1;
+  else     af_row = (af_row + 1 < AF_N_ROWS) ? af_row + 1 : 0;
+  af_drawRow(old);
+  af_drawRow(af_row);
+  dwinUpdateLCD();
+}
+
+static void af_click() {
+  if (af_edit) {
+    af_edit = false;
+    af_drawRow(af_row);
+    dwinUpdateLCD();
+    marlin.wait_start();
+    return;
+  }
+  if (af_row == AF_ROW_OFF) {
+    af_edit = true;
+    af_drawRow(af_row);
+    dwinUpdateLCD();
+    marlin.wait_start();
+    return;
+  }
+  if (af_row == AF_ROW_GO) {
+    if (!af_hasBase) { marlin.wait_start(); return; }        // (0,0) sem base — ignora
+    const uint8_t x = me_cx(), y = me_cy();
+    float v = af_base + af_offset;
+    LIMIT(v, -ME_ZLIM, ME_ZLIM);
+    bedlevel.z_values[x][y] = v;
+    // Ja entra em modo edicao — bico vai ate o ponto na altura v e girar
+    // continua ajustando (0,01 mm). Clique grava e sai do modo edicao.
+    me_z = v;
+    me_editing = true;
+    gotoPopup(me_drawAll, me_onClick, me_onChange);
+    me_moveTo(x, y, me_z);
+    me_status();
+    dwinUpdateLCD();
+    return;
+  }
+  // AF_ROW_EXIT
+  gotoPopup(me_drawAll, me_onClick, me_onChange);
+}
+
+bool meshEditLongPress() {
+  // So aceita quando o popup ativo e' o editor de malha e nao estamos com o
+  // bico em movimento nem editando um ponto em tempo real.
+  if (checkkey != ID_Popup) return false;
+  if (popupDraw != me_drawAll) return false;
+  if (me_busy || me_editing) return false;
+  af_calcBase();
+  af_row = af_hasBase ? AF_ROW_OFF : AF_ROW_EXIT;   // foco util por padrao
+  af_edit = false;
+  gotoPopup(af_drawAll, af_click, af_change);
+  return true;
 }
 
 #endif // DWIN_LCD_PROUI && MESH_BED_LEVELING

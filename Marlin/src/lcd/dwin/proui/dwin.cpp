@@ -1155,11 +1155,20 @@ void eachMomentUpdate() {
 #endif // POWER_LOSS_RECOVERY
 
 void dwinHandleScreen() {
-  #if HAS_TOOLBAR
-    if (encoderLongPress) { encoderLongPress = false; quickMenuLongPress(); }   // menu rapido "Atalhos"
-  #else
+  if (encoderLongPress) {
     encoderLongPress = false;
-  #endif
+    // Ricardo: no editor de malha, long-press abre o sub-popup "auto-preencher"
+    // (nao o quickmenu geral — os atalhos gerais quebrariam o estado do editor).
+    #if ALL(DWIN_LCD_PROUI, MESH_BED_LEVELING)
+      if (meshEditLongPress()) { /* tratado */ }
+      else
+    #endif
+    #if HAS_TOOLBAR
+      quickMenuLongPress();
+    #else
+      { /* nada */ }
+    #endif
+  }
   switch (checkkey) {
     case ID_MainMenu:        hmiMainMenu(); break;
     case ID_Menu:
