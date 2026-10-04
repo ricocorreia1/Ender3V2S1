@@ -15,7 +15,7 @@
 #include "toolbar.h"
 #include "quickmenu.h"
 
-#define QM_MAX 20                 // Voltar + ate 19 atalhos (cobre todo TBItemA)
+#define QM_MAX 28                 // Voltar + ate 27 atalhos (TBItemA tem 17 sem sonda, 19 com sonda)
 
 static uint8_t qm_count;          // linhas em uso
 static uint8_t qm_sel;            // indice absoluto do selecionado

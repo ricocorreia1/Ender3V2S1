@@ -475,7 +475,7 @@ namespace LanguageNarrow_pt_br {
   LSTR MSG_BED_IS_RUN                     = _UxGT("da MESA em andamento.");
   LSTR MSG_BED_PID_SETTINGS               = _UxGT("Ajustes PID mesa");
   LSTR MSG_BED_TEMPERATURE                = _UxGT("Temperatura da mesa");
-  LSTR MSG_BED_TRAMMING_MANUAL            = _UxGT("Nivelar cantos");
+  LSTR MSG_BED_TRAMMING_MANUAL            = _UxGT("Cantos manual");
   LSTR MSG_BRIGHTNESS                     = _UxGT("Brilho da tela");
   LSTR MSG_BRIGHTNESS_OFF                 = _UxGT("Apagar tela");
   LSTR MSG_BUTTON_ADVANCED                = _UxGT("Avançado");
@@ -643,6 +643,29 @@ namespace LanguageNarrow_pt_br {
   LSTR MSG_Z_AFTER_HOME                   = _UxGT("Z apos a origem");
   LSTR MSG_Z_FEED_RATE                    = _UxGT("Velocidade Z");
   LSTR MSG_Z_POSITION_IS_UNKNOWN          = _UxGT("AVISO: posicao Z desconhecida, leve Z a origem");
+
+  // ---- avisos gerais que ainda saiam em ingles (aparecem mais na versao com sonda / ao trocar de firmware) ----
+  LSTR MSG_ERR_EEPROM_CRC                 = _UxGT("Erro: CRC da EEPROM");
+  LSTR MSG_ERR_EEPROM_SIZE                = _UxGT("Erro: tamanho da EEPROM");
+  LSTR MSG_ERR_EEPROM_VERSION             = _UxGT("Erro: versão da EEPROM");
+  LSTR MSG_ERR_EEPROM_CORRUPT             = _UxGT("Erro: EEPROM corrompida");
+  LSTR MSG_M48_DEV                        = _UxGT("Desv");
+  LSTR MSG_M48_DEVIATION                  = _UxGT("Desvio");
+  LSTR MSG_M48_MAX_DELTA                  = _UxGT("Delta máx");
+  LSTR MSG_PREHEATING                     = _UxGT("Preaquecendo...");
+  LSTR MSG_PAUSING                        = _UxGT("Pausando...");
+  LSTR MSG_NOZZLE_PARKED                  = _UxGT("Bico estacionado");
+  LSTR MSG_PARK_FAILED                    = _UxGT("Não foi possível estacionar");
+  LSTR MSG_HEATER_TIMEOUT                 = _UxGT("Aquecedor desligado por tempo");
+  LSTR MSG_REHEAT                         = _UxGT("Reaquecer");
+  LSTR MSG_REHEATING                      = _UxGT("Reaquecendo...");
+  LSTR MSG_REHEATDONE                     = _UxGT("Reaquecido");
+  LSTR MSG_PID_AUTOTUNE_DONE              = _UxGT("Ajuste PID concluído");
+  LSTR MSG_PID_TEMP_TOO_HIGH              = _UxGT("Autoajuste falhou! Temperatura alta demais.");
+  LSTR MSG_ERR_COOLING_FAILED             = _UxGT("Falha no resfriamento");
+  LSTR MSG_MEDIA_INSERTED_SD              = _UxGT("Cartão inserido");
+  LSTR MSG_MEDIA_REMOVED_SD               = _UxGT("Cartão removido");
+  LSTR MSG_MEDIA_INIT_FAIL_SD             = _UxGT("Falha ao iniciar o cartão");
 }
 
 namespace LanguageWide_pt_br {

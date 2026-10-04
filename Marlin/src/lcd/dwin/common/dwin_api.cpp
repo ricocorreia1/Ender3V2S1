@@ -312,6 +312,27 @@ const char* dwinPtbrTexto(const char * const s) {
     { "Author: ",               "Autor: "                },
     { "HIGH",                   "ALTA"                   },
     { "LOW",                    "BAIXA"                  },
+    { "Mesh inset and leveling settings", "Margem da malha e nivelamento" },
+    // versao com sonda (BLTouch/CRTouch): assistente de cantos e avisos da sondagem
+    { "Tramming Wizard",        "Assistente de cantos"   },
+    { "Bed Tramming",           "Nivelar cantos"         },
+    { "Corners leveled",        "Cantos nivelados"       },
+    { "Corners not leveled",    "Cantos desnivelados"    },
+    { "Tolerance achieved!",    "Tolerância atingida!"   },
+    { "Adjustment required",    "Ajuste necessário"      },
+    { "Front Left",             "Frente esquerda"        },
+    { "Front Right",            "Frente direita"         },
+    { "Back Left",              "Fundo esquerdo"         },
+    { "Back Right",             "Fundo direito"          },
+    { "Lower",                  "Abaixar"                },
+    { "Raise",                  "Levantar"               },
+    { "relative heights",       "alturas relativas"      },
+    { "Calculating",            "Calculando"             },
+    { "Canceling leveling...",  "Cancelando nivelamento..." },
+    { "Mesh cancelled",         "Malha cancelada"        },
+    { "Manual tramming must be disabled", "Desative o modo Cantos manual" },
+    { "Probe Z Fix, Speed and Multiple Probing", "Correção Z, velocidade e sondagem múltipla" },
+    { "Error",                  "Erro"                   },
   };
   for (uint8_t i = 0; i < COUNT(tabela); ++i)
     if (strcmp(s, tabela[i].en) == 0) return tabela[i].pt;

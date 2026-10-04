@@ -4,8 +4,9 @@
  */
 
 #include "../../../inc/MarlinConfigPre.h"
+#include "meshedit.h"
 
-#if ALL(DWIN_LCD_PROUI, MESH_BED_LEVELING)
+#if HAS_MESH_EDITOR
 
 #include "../../../MarlinCore.h"
 #include "../../../core/types.h"
@@ -17,7 +18,6 @@
 #include "dwin.h"
 #include "dwinui.h"
 #include "dwin_popup.h"
-#include "meshedit.h"
 
 // ---- Geometria da grade (mesma do visualizador original) --------------------
 #define ME_MARGIN 25                                   // margem lateral
@@ -192,6 +192,7 @@ static void me_onChange(const bool ccw) {
 static void me_leave() {
   if (me_moved) gcode.process_subcommands_now(TS(F("G0 F300 Z"), p_float_t(Z_CLEARANCE_BETWEEN_PROBES, 3)));
   gcode.process_subcommands_now(F("M211 S1"));    // religa os fins de curso por software
+  TERN_(AUTO_BED_LEVELING_BILINEAR, bedlevel.refresh_bed_level());   // malha da sonda: descarta o cache da interpolacao
   set_bed_leveling_enabled(me_levelWas);
   hmiReturnScreen();
 }
@@ -355,6 +356,7 @@ static void af_click() {
     me_z = v;
     me_editing = true;
     gotoPopup(me_drawAll, me_onClick, me_onChange);
+    marlin.wait_start();      // ja estavamos em ID_Popup: gotoPopup nao re-arma a espera do clique
     me_moveTo(x, y, me_z);
     me_status();
     dwinUpdateLCD();
@@ -362,6 +364,10 @@ static void af_click() {
   }
   // AF_ROW_EXIT
   gotoPopup(me_drawAll, me_onClick, me_onChange);
+  // Sem isto o editor recebia um "clique fantasma" logo ao voltar (a espera do
+  // clique nao e' re-armada pelo gotoPopup quando a tela ja e' um popup) e
+  // entrava em edicao / movia o bico para o ponto sozinho.
+  marlin.wait_start();
 }
 
 bool meshEditLongPress() {
@@ -377,4 +383,4 @@ bool meshEditLongPress() {
   return true;
 }
 
-#endif // DWIN_LCD_PROUI && MESH_BED_LEVELING
+#endif // HAS_MESH_EDITOR

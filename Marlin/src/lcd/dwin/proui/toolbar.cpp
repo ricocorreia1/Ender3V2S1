@@ -28,7 +28,9 @@
 #include "toolbar.h"
 #include "toolbar_def.h"
 // os indices 13/14/15/16/17 do DEF_TBOPT (Aquecer bico / Aquecer mesa / Limpar bico / Preparar calibracao / Ir para tela inicial) dependem desta contagem
-static_assert(COUNT(TBItemA) == 18, "TBItemA mudou de tamanho: ajuste DEF_TBOPT em proui_ex.h");
+// Com sonda (BLTouch) entram 2 itens a mais no comeco (assistente de cantos / sonda Z / malha automatica
+// no lugar de "Origem Z e desligar"), entao os nossos ficam em 15..19 e o DEF_TBOPT e' o original {1,2,3,4,5}.
+static_assert(COUNT(TBItemA) == TERN(HAS_BED_PROBE, 20, 18), "TBItemA mudou de tamanho: ajuste DEF_TBOPT em proui_ex.h");
 #include "menus.h"
 
 const TBItem_t *TBItem;

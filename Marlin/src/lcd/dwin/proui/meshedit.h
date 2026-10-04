@@ -13,7 +13,11 @@
 
 #include "../../../inc/MarlinConfigPre.h"
 
-#if ALL(DWIN_LCD_PROUI, MESH_BED_LEVELING)
+// Vale para a malha manual (MESH_BED_LEVELING) e para a malha da sonda
+// (AUTO_BED_LEVELING_BILINEAR - BLTouch/CRTouch): as duas guardam os pontos em
+// bedlevel.z_values. UBL fica de fora (tem editor proprio).
+#if ENABLED(DWIN_LCD_PROUI) && ANY(MESH_BED_LEVELING, AUTO_BED_LEVELING_BILINEAR)
+  #define HAS_MESH_EDITOR 1
   void gotoMeshEdit();
   // Chamado no long-press quando o editor de malha esta aberto.
   // Abre um sub-popup para "auto-preencher" o ponto atual usando os vizinhos

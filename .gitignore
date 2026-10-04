@@ -4,6 +4,7 @@
 !/.gitignore
 !/platformio.ini
 !/traduzir_ptbr.py
+!/trocar_config.py
 !/firmware_ptbr/
 !/Marlin/
 /Marlin/*

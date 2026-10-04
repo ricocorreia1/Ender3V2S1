@@ -124,9 +124,7 @@
 #if ANY(HAS_MESH, HAS_TRAMMING_WIZARD)
   #include "meshviewer.h"
 #endif
-#if ENABLED(MESH_BED_LEVELING)
-  #include "meshedit.h"
-#endif
+#include "meshedit.h"   // define HAS_MESH_EDITOR (malha manual ou malha da sonda)
 
 #if HAS_LOCKSCREEN
   #include "lockscreen.h"
@@ -1159,7 +1157,7 @@ void dwinHandleScreen() {
     encoderLongPress = false;
     // Ricardo: no editor de malha, long-press abre o sub-popup "auto-preencher"
     // (nao o quickmenu geral — os atalhos gerais quebrariam o estado do editor).
-    #if ALL(DWIN_LCD_PROUI, MESH_BED_LEVELING)
+    #if HAS_MESH_EDITOR
       if (meshEditLongPress()) { /* tratado */ }
       else
     #endif
@@ -3626,7 +3624,7 @@ void drawMaxAccelMenu() {
         MENU_ITEM(ICON_MeshEdit, MSG_EDIT_MESH, onDrawSubMenu, drawEditMeshMenu);
       #endif
       MENU_ITEM(ICON_MeshViewer, MSG_MESH_VIEW, onDrawSubMenu, dwinMeshViewer);
-      #if ENABLED(MESH_BED_LEVELING)
+      #if HAS_MESH_EDITOR
         MENU_ITEM_F(ICON_MeshEdit, "Editar malha", onDrawSubMenu, gotoMeshEdit);
       #endif
     }
