@@ -125,6 +125,7 @@
   #include "meshviewer.h"
 #endif
 #include "meshedit.h"   // define HAS_MESH_EDITOR (malha manual ou malha da sonda)
+#include "folgamenu.h"  // define HAS_FOLGA_MENU (compensacao de folga do Z)
 
 #if HAS_LOCKSCREEN
   #include "lockscreen.h"
@@ -2545,6 +2546,9 @@ void drawAdvancedSettingsMenu() {
     #endif
     #if HAS_BED_PROBE
       MENU_ITEM(ICON_ProbeSet, MSG_ZPROBE_SETTINGS, onDrawSubMenu, drawProbeSetMenu);
+    #endif
+    #if HAS_FOLGA_MENU
+      MENU_ITEM_F(ICON_StepZ, "Folga do eixo Z", onDrawSubMenu, drawFolgaMenu);
     #endif
     MENU_ITEM(ICON_FilSet, MSG_FILAMENT_SET, onDrawSubMenu, drawFilSetMenu);
     #if ENABLED(PIDTEMP) && ANY(PID_AUTOTUNE_MENU, PID_EDIT_MENU)
