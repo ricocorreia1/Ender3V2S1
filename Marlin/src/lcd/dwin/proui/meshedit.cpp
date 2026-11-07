@@ -128,7 +128,7 @@ static void me_status() {
 
 // Tela completa (chamada pelo sistema de popup, inclusive em redesenhos)
 static void me_drawAll() {
-  title.draw(F("Editar malha"));
+  title.draw(F("Editor grafico da malha"));
   DWINUI::clearMainArea();
   dwinDrawRectangle(0, hmiData.colorSplitLine, me_px(0), me_py(me_ny - 1), me_px(me_nx - 1), me_py(0));
   for (uint8_t x = 1; x < me_nx - 1; ++x) dwinDrawVLine(hmiData.colorSplitLine, me_px(x), me_py(me_ny - 1), ME_WIDTH);

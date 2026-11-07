@@ -3020,7 +3020,7 @@ void drawMotionMenu() {
       mMeshMoveZItem = EDIT_ITEM(ICON_Zoffset, MSG_MOVE_Z, onDrawPFloat2Menu, setMMeshMoveZ, &current_position.z);
       MENU_ITEM(ICON_Axis, MSG_UBL_CONTINUE_MESH, onDrawMenuItem, manualMeshContinue);
       MENU_ITEM(ICON_MeshViewer, MSG_MESH_VIEW, onDrawSubMenu, dwinMeshViewer);
-      MENU_ITEM_F(ICON_MeshEdit, "Editar malha", onDrawSubMenu, gotoMeshEdit);
+      MENU_ITEM_F(ICON_MeshEdit, "Editor grafico", onDrawSubMenu, gotoMeshEdit);
       MENU_ITEM(ICON_MeshSave, MSG_UBL_SAVE_MESH, onDrawMenuItem, manualMeshSave);
     }
     SET_MENU(manualMesh, MSG_UBL_MANUAL_MESH);
@@ -3629,7 +3629,7 @@ void drawMaxAccelMenu() {
       #endif
       MENU_ITEM(ICON_MeshViewer, MSG_MESH_VIEW, onDrawSubMenu, dwinMeshViewer);
       #if HAS_MESH_EDITOR
-        MENU_ITEM_F(ICON_MeshEdit, "Editar malha", onDrawSubMenu, gotoMeshEdit);
+        MENU_ITEM_F(ICON_MeshEdit, "Editor grafico", onDrawSubMenu, gotoMeshEdit);
       #endif
     }
     SET_MENU(meshMenu, MSG_MESH_LEVELING);
